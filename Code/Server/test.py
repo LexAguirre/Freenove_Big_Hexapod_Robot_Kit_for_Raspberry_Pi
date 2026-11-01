@@ -75,6 +75,44 @@ def test_Servo():
         servo.relax()
         print ("\nEnd of program")
 
+def test_Servo_Channel(channel, min_angle=60, max_angle=120, hold=1.0):
+    from servo import Servo
+    servo = Servo()
+    try:
+        if channel < 0 or channel > 31:
+            print ("Channel must be between 0 and 31")
+            return
+
+        print ("Testing servo channel: " + str(channel))
+        print ("Move to " + str(min_angle))
+        servo.set_servo_angle(channel, min_angle)
+        time.sleep(hold)
+
+        print ("Move to " + str(max_angle))
+        servo.set_servo_angle(channel, max_angle)
+        time.sleep(hold)
+
+        print ("Move to 90 (center)")
+        servo.set_servo_angle(channel, 90)
+        time.sleep(hold)
+
+        print ("\nEnd of program")
+        servo.relax()
+    except KeyboardInterrupt:
+        servo.relax()
+        print ("\nEnd of program")
+
+def set_servo_neutral(channel):
+    from servo import Servo
+    servo = Servo()
+    if channel < 0 or channel > 31:
+        print ("Channel must be between 0 and 31")
+        return
+    servo.set_servo_angle(channel, 90)
+    print ("Servo " + str(channel) + " set to neutral angle 90")
+    servo.relax()
+
+
 def test_Adc():
     from adc import ADC
     adc = ADC()
@@ -102,6 +140,33 @@ def test_Buzzer():
     except KeyboardInterrupt:
         buzzer.set_state(False)
         print ("End of program")
+
+def test_Buzzer_Song():
+    from buzzer import Buzzer
+    buzzer = Buzzer()
+    # Imperial March-inspired rhythm for an active buzzer (single tone).
+    song_pattern = [
+        # DA DA DA - DAAAH
+        (0.16, 0.08), (0.16, 0.08), (0.16, 0.08), (0.48, 0.20),
+        # DA DA DA - DAAAH
+        (0.16, 0.08), (0.16, 0.08), (0.16, 0.08), (0.48, 0.20),
+        # DA DA DA DA DAAAH
+        (0.16, 0.08), (0.16, 0.08), (0.16, 0.08), (0.16, 0.08), (0.48, 0.20),
+        # Transition
+        (0.14, 0.07), (0.14, 0.07), (0.14, 0.07), (0.32, 0.18),
+    ]
+    try:
+        print ("\nPlaying buzzer song...")
+        for on_time, off_time in song_pattern:
+            buzzer.set_state(True)
+            time.sleep(on_time)
+            buzzer.set_state(False)
+            time.sleep(off_time)
+        print ("Song finished")
+    except KeyboardInterrupt:
+        print ("\nSong interrupted")
+    finally:
+        buzzer.set_state(False)
         
 
 if __name__ == '__main__':
@@ -109,18 +174,32 @@ if __name__ == '__main__':
     import sys
     if len(sys.argv)<2:
         print ("Parameter error: Please assign the device")
+        print ("Usage: sudo python3 test.py [Led|Ultrasonic|Servo|ADC|Buzzer|BuzzerSong] [channel]")
         exit() 
     if sys.argv[1] == 'Led':
         test_Led()
     elif sys.argv[1] == 'Ultrasonic':
         test_Ultrasonic()
     elif sys.argv[1] == 'Servo': 
-        test_Servo()               
+        if len(sys.argv) >= 3:
+            try:
+                channel = int(sys.argv[2])
+                test_Servo_Channel(channel)
+            except ValueError:
+                print ("Channel must be an integer")
+        else:
+            test_Servo()               
     elif sys.argv[1] == 'ADC':   
         test_Adc()  
     elif sys.argv[1] == 'Buzzer':   
         test_Buzzer()
-        
-        
-        
-        
+    elif sys.argv[1] == 'BuzzerSong':
+        test_Buzzer_Song()
+    elif sys.argv[1] == 'Serv_nut':
+        print("Setting servo to neutral position")
+        print("Channel:", int(sys.argv[2]))
+        set_servo_neutral(int(sys.argv[2]))
+    elif sys.argv[1] == 'Serv_max':
+        print("Setting servo to maximum position")
+        print("Channel:", int(sys.argv[2]))
+        test_Servo_Channel(int(sys.argv[2]))
